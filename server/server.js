@@ -24,7 +24,7 @@ app.post('/todoz', (req, res) => {
         res.send(doc);
     }, (er) => {
         res.status(400).send(er);
-    })    
+    }).catch((er) => res.status(400).send(err));     
 });
 
 app.get('/todoz', (req, res) => {
@@ -33,7 +33,7 @@ app.get('/todoz', (req, res) => {
         res.send({doc});
     }, (err) => {
         res.status(400).send(err);
-    })
+    }).catch((er) => res.status(400).send(err));
 });
 
 app.get('/todoz/:id', (req, res) => {
