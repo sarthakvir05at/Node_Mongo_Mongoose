@@ -23,6 +23,15 @@ app.post('/todoz', (req, res) => {
     })    
 });
 
+app.get('/todoz', (req, res) => {
+
+    Todo.find().then((doc) => {
+        res.send(doc);
+    }, (err) => {
+        res.status(400).send(err);
+    })
+})
+
 app.listen(3000, () => {
     console.log('Listening At Port 3000');  
 }) 
