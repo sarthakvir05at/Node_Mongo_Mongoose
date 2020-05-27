@@ -40,13 +40,13 @@ app.get('/todoz/:id', (req, res) => {
 
     var id= req.params.id;
     if(!ObjectId.isValid(id))
-    return res.status(400).send('Out FUnctions');
+    return res.status(400).send('Invalid ID');
 
     Todo.findById(id).then((docc) => {
         if(!docc)
-        return res.status(400).send('In Function');
+        return res.status(400).send('ID Not Found');
         res.send(({docc}));
-    }).catch((err) => res.status(400).send('Out Out'));
+    }).catch((err) => res.status(400).send('Some Error Occured'));
 
 })
 
