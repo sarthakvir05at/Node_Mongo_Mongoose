@@ -1,10 +1,11 @@
 var {mongoose}= require('./db/mongoose');
 var {Todo}= require('./models/todo');
 var {user}= require('./models/user');
-var {ObjectId}= require('mongodb');
 
-var expres= require('express');
-var bodyParser= require('body-parser');
+const {ObjectId}= require('mongodb');
+const expres= require('express');
+const _= require('lodash');
+const bodyParser= require('body-parser');
 
 var app= expres();
 
@@ -63,6 +64,29 @@ app.delete('/todoz/:id', (req,res) => {
         res.send((JSON.stringify(docs, undefined, 2)));
     }).catch((err) => res.status(400).send('Error Occured'));
 });
+
+//patch is used when you have to update a document
+app.patch('/todoz/:id', (req,res) => {
+    var id= req.params.id;
+    var body= _.pick(req.body, ['text', 'complete']);
+
+    if(!ObjectId.isValid(id))
+    return res.status(404).send('Invalid Id');
+
+    if(_.isBoolean(req.body.complete) && body.complete )
+    body.completedAt= new Date().getTime();
+    else{
+        body.complete= false;
+        body.completedAt= null;
+    }
+
+    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((docc) => {
+        if(!docc)
+        return res.status(404).send('Id Not Found');
+
+        res.send({docc});
+    }).catch((err) => res.status(400).send('Error Occured'));
+})
 
 app.listen(port, () => {
     console.log(`Started Up At ${port}`);  
