@@ -71,6 +71,26 @@ UserSchema.statics.getAuthToken= function (token) {
         'tokens.access': 'auth' 
     });
 };
+
+UserSchema.statics.findByCredentials= function (email, password) {
+    var User= this;
+
+    return User.findOne({ email }).then((docs) => {
+        if(!docs)
+        return Promise.reject();
+        
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, docs.password, (err, res) => {
+                if(res)
+                resolve(docs);
+                else
+                reject();
+            })
+        })
+        
+    })
+}
+
 // pre is used to perform a task before some event, in this case, it will run before saving it
 UserSchema.pre('save', function (next) {
     var user= this;
