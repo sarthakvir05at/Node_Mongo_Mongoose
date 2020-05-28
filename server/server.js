@@ -14,12 +14,13 @@ const port= process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-app.post('/todoz', (req, res) => {
+app.post('/todoz', authenticate, (req, res) => {
 
     var newTodo= new Todo({
         text: req.body.text,
         complete: req.body.complete,
-        completedAt: req.body.completedAt
+        completedAt: req.body.completedAt,
+        _creator: req.user._id 
     });
 
     newTodo.save().then((doc) => {
@@ -29,22 +30,26 @@ app.post('/todoz', (req, res) => {
     }).catch((er) => res.status(400).send(err));     
 });
 
-app.get('/todoz', (req, res) => {
+app.get('/todoz', authenticate, (req, res) => {
 
-    Todo.find().then((doc) => {
+    Todo.find({
+        _creator: req.user._id
+    }).then((doc) => {
         res.send({doc});
     }, (err) => {
         res.status(400).send(err);
-    }).catch((er) => res.status(400).send(err));
-});
+    }) });
 
-app.get('/todoz/:id', (req, res) => {
+app.get('/todoz/:id', authenticate, (req, res) => {
 
     var id= req.params.id;
     if(!ObjectId.isValid(id))
     return res.status(400).send('Invalid ID');
 
-    Todo.findById(id).then((docc) => {
+    Todo.findById({
+        _id: id,
+        _creator: req.user.id
+    }).then((docc) => {
         if(!docc)
         return res.status(400).send('ID Not Found');
         res.send(({docc}));
@@ -52,14 +57,17 @@ app.get('/todoz/:id', (req, res) => {
 
 });
 
-app.delete('/todoz/:id', (req,res) => {
+app.delete('/todoz/:id', authenticate, (req,res) => {
     
     var id= req.params.id;
 
     if(!ObjectId.isValid(id))
     return res.status(404).send('Invalid Id');
 
-    Todo.findByIdAndRemove(id).then((docs) => {
+    Todo.findByIdAndRemove({
+        _id: id,
+        _creator: req.user.id
+    }).then((docs) => {
         if(!docs)
         return res.status(404).send('Document Not Found');
         res.send((JSON.stringify(docs, undefined, 2)));
@@ -67,7 +75,7 @@ app.delete('/todoz/:id', (req,res) => {
 });
 
 //patch is used when you have to update a document
-app.patch('/todoz/:id', (req,res) => {
+app.patch('/todoz/:id', authenticate, (req,res) => {
     var id= req.params.id;
     var body= _.pick(req.body, ['text', 'complete']);
 
@@ -81,7 +89,10 @@ app.patch('/todoz/:id', (req,res) => {
         body.completedAt= null;
     }
 
-    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((docc) => {
+    Todo.findOneAndUpdate({
+        _id: id,
+        _creator: req.user.id
+    }, { $set: body }, { new: true }).then((docc) => {
         if(!docc)
         return res.status(404).send('Id Not Found');
 
