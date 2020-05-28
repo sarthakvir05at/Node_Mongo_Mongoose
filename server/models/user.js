@@ -2,6 +2,7 @@ const mongoose= require('mongoose');
 const validator= require('validator');
 const jwt= require('jsonwebtoken');
 const _= require('lodash');
+const bcrypt= require('bcryptjs');
 
 var UserSchema= new mongoose.Schema({
     email: {
@@ -69,7 +70,25 @@ UserSchema.statics.getAuthToken= function (token) {
         'tokens.token': token,
         'tokens.access': 'auth' 
     });
-}  
+};
+// pre is used to perform a task before some event, in this case, it will run before saving it
+UserSchema.pre('save', function (next) {
+    var user= this;
+    
+    if(user.isModified('password'))
+    {
+        var pass= user.password;
+
+        bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(pass, salt, (err, hash) => {
+                user.password= hash;
+                next();
+            })
+        })
+    } else {
+        next();
+    }
+})
 
 var User= mongoose.model('User', UserSchema );
 
